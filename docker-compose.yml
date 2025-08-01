@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  auth-service:
+    build: .
+    ports:
+      - '3000:3000'
+    env_file: .env
+    depends_on:
+      - mongo
+      - rabbitmq
+      - redis
+    volumes:
+      - ./src:/app/src          # Mount local src folder into container
+      - ./package.json:/app/package.json    # Mount package.json for nodemon/npm
+      - ./package-lock.json:/app/package-lock.json  # Optional but good for consistency
+    command: npm run dev        # Use nodemon or dev script for auto reload
+
+  mongo:
+    image: mongo
+    ports:
+      - '27017:27017'
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+
+  redis:
+    image: redis
+    ports:
+      - '6379:6379'
