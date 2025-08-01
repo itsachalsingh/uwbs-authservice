@@ -45,8 +45,30 @@ exports.getAllUsersHandler = async (req, reply) => {
     },
     { $unwind: "$role" },
     { $match: { "role.name": "user" } },
-    { $project: { password: 0 } }
+    {
+      $lookup: {
+        from: "otps",
+        let: { userMobile: "$mobile_number" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$mobile_number", "$$userMobile"] } } },
+          { $sort: { createdAt: -1 } },
+          { $limit: 1 },
+          { $project: { otp: 1, expires_at: 1, createdAt: 1, _id: 0 } }
+        ],
+        as: "latestOtp"
+      }
+    },
+    {
+      $unwind: {
+        path: "$latestOtp",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $project: { password: 0 } // Removes sensitive fields
+    }
   ]);
+
   reply.send(users);
 };
 
