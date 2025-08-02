@@ -24,7 +24,9 @@
     "fastify-plugin": "^5.0.1",
     "ioredis": "^5.6.1",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.16.1"
+    "mongoose": "^8.16.1",
+    "@grpc/grpc-js": "^1.9.8",
+    "@grpc/proto-loader": "^0.7.8"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

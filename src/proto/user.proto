@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package user;
+
+service UserService {
+  rpc GetApplications (EmptyRequest) returns (ApplicationList);
+}
+
+message EmptyRequest {}
+
+message Application {
+  string id = 1;
+  string user_id = 2;
+  string status = 3;
+  string created_at = 4;
+  // add other fields as needed
+}
+
+message ApplicationList {
+  repeated Application applications = 1;
+}
