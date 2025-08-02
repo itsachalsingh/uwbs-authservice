@@ -4,7 +4,118 @@ const permissionController = require("../controllers/permission.controller");
 const User = require("../models/User");
 
 module.exports = async function (fastify) {
-  // ------------------ Send OTP ------------------
+
+
+  // ------------------ Register User ------------------
+  fastify.post("/register", {
+    schema: {
+      tags: ["Auth"],
+      summary: "Register a user with OTP verification",
+      body: {
+        type: "object",
+        required: [
+          "first_name",
+          "last_name",
+          "email",
+          "password",
+          "mobile_number",
+          "otp",
+        ],
+        properties: {
+          first_name: { type: "string" },
+          last_name: { type: "string" },
+          email: { type: "string", format: "email" },
+          password: { type: "string", minLength: 6 },
+          mobile_number: { type: "string", minLength: 10, maxLength: 15 },
+          otp: { type: "string", minLength: 6, maxLength: 6 },
+        },
+      },
+      response: {
+        201: {
+          description:
+            "User registered successfully with verified mobile number",
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            first_name: { type: "string" },
+            last_name: { type: "string" },
+            email: { type: "string" },
+            mobile_number: { type: "string" },
+            role_id: { type: "string" },
+            message: { type: "string" },
+          },
+        },
+        400: {
+          description: "Bad request - Invalid OTP or user already exists",
+          type: "object",
+          properties: {
+            error: { type: "string" },
+          },
+        },
+      },
+    },
+    handler: authController.register,
+  });
+
+
+
+  // ------------------ Login User ------------------
+  fastify.post("/login", {
+    schema: {
+      tags: ["Auth"],
+      summary: "Login a user using email/password or mobile number/otp",
+      body: {
+        type: "object",
+        properties: {
+          email_or_mobile_number: { type: "string" },
+          password: { type: "string" },
+          otp: { type: "string", minLength: 4, maxLength: 8 },
+        },
+        oneOf: [
+          {
+            required: ["email_or_mobile_number", "password"],
+          },
+          {
+            required: ["mobile_number", "otp"],
+          },
+        ],
+      },
+      response: {
+        200: {
+          description: "Login successful",
+          type: "object",
+          properties: {
+            token: { type: "string" },
+            message: { type: "string" },
+            access: {
+              type: "object",
+              properties: {
+                permissions: { type: "array", items: { type: "string" } },
+                role: { type: "string" },
+              },
+            },
+          },
+        },
+        400: {
+          description: "Bad request",
+          type: "object",
+          properties: {
+            error: { type: "string" },
+          },
+        },
+        401: {
+          description: "Unauthorized",
+          type: "object",
+          properties: {
+            error: { type: "string" },
+          },
+        },
+      },
+    },
+    handler: authController.login,
+  });
+
+    // ------------------ Send OTP ------------------
   fastify.post("/send-otp", {
     schema: {
       tags: ["Auth"],
@@ -116,130 +227,6 @@ module.exports = async function (fastify) {
 
   });
 
-  // ------------------ Register User ------------------
-  fastify.post("/register", {
-    schema: {
-      tags: ["Auth"],
-      summary: "Register a user with OTP verification",
-      body: {
-        type: "object",
-        required: [
-          "first_name",
-          "last_name",
-          "email",
-          "password",
-          "mobile_number",
-          "otp",
-        ],
-        properties: {
-          first_name: { type: "string" },
-          last_name: { type: "string" },
-          email: { type: "string", format: "email" },
-          password: { type: "string", minLength: 6 },
-          mobile_number: { type: "string", minLength: 10, maxLength: 15 },
-          otp: { type: "string", minLength: 6, maxLength: 6 },
-        },
-      },
-      response: {
-        201: {
-          description:
-            "User registered successfully with verified mobile number",
-          type: "object",
-          properties: {
-            id: { type: "string" },
-            first_name: { type: "string" },
-            last_name: { type: "string" },
-            email: { type: "string" },
-            mobile_number: { type: "string" },
-            role_id: { type: "string" },
-            message: { type: "string" },
-          },
-        },
-        400: {
-          description: "Bad request - Invalid OTP or user already exists",
-          type: "object",
-          properties: {
-            error: { type: "string" },
-          },
-        },
-      },
-    },
-    handler: authController.register,
-  });
-
-  // ------------------ Verify OTP ------------------
-  fastify.post("/verify-otp", {
-    schema: {
-      tags: ["Auth"],
-      summary: "Verify user OTP and complete registration",
-      body: {
-        type: "object",
-        required: ["mobile_number", "otp"],
-        properties: {
-          mobile_number: { type: "string", minLength: 10, maxLength: 20 },
-          otp: { type: "string", minLength: 4, maxLength: 6 },
-        },
-      },
-    },
-    handler: authController.verifyOtp,
-  });
-
-  // ------------------ Login User ------------------
-  fastify.post("/login", {
-    schema: {
-      tags: ["Auth"],
-      summary: "Login a user using email/password or mobile number/otp",
-      body: {
-        type: "object",
-        properties: {
-          email_or_mobile_number: { type: "string" },
-          password: { type: "string" },
-          otp: { type: "string", minLength: 4, maxLength: 8 },
-        },
-        oneOf: [
-          {
-            required: ["email_or_mobile_number", "password"],
-          },
-          {
-            required: ["mobile_number", "otp"],
-          },
-        ],
-      },
-      response: {
-        200: {
-          description: "Login successful",
-          type: "object",
-          properties: {
-            token: { type: "string" },
-            message: { type: "string" },
-            access: {
-              type: "object",
-              properties: {
-                permissions: { type: "array", items: { type: "string" } },
-                role: { type: "string" },
-              },
-            },
-          },
-        },
-        400: {
-          description: "Bad request",
-          type: "object",
-          properties: {
-            error: { type: "string" },
-          },
-        },
-        401: {
-          description: "Unauthorized",
-          type: "object",
-          properties: {
-            error: { type: "string" },
-          },
-        },
-      },
-    },
-    handler: authController.login,
-  });
-
   // ------------------ Get All Users ------------------
 
   fastify.get("/users", {
@@ -346,6 +333,23 @@ module.exports = async function (fastify) {
       },
     },
     handler: authController.getAllAdmins,
+  });
+
+    // ------------------ Verify OTP ------------------
+  fastify.post("/verify-otp", {
+    schema: {
+      tags: ["Auth"],
+      summary: "Verify user OTP and complete registration",
+      body: {
+        type: "object",
+        required: ["mobile_number", "otp"],
+        properties: {
+          mobile_number: { type: "string", minLength: 10, maxLength: 20 },
+          otp: { type: "string", minLength: 4, maxLength: 6 },
+        },
+      },
+    },
+    handler: authController.verifyOtp,
   });
 
   // ------------------ Logut User -------------------
